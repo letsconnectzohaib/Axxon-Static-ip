@@ -174,7 +174,7 @@ echo.
 
 :: Try to send to Google Sheets first
 echo Sending data to Google Sheets...
-powershell -Command "$body = '{\"name\":\"%userName%\",\"ip\":\"%currentIP%\",\"adapter\":\"%adapter%\",\"timestamp\":\"%date% %time%\"}'; try { $response = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbyg1tWXkVfplA7wXclnj0iVqkfcv5T0XMHCIQQYGhWb_SC3GkYYErJ9dun2COXj9i6k/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -UseBasicParsing; if($response.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
+powershell -Command "$body = '{\"name\":\"%userName%\",\"ip\":\"%currentIP%\",\"adapter\":\"%adapter%\",\"timestamp\":\"%date% %time%\"}'; try { $response = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbyg1tWXkVfplA7wXclnj0iVqkfcv5T0XMHCIQQYGhWb_SC3GkYYErJ9dun2COXj9i6k/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -UseBasicParsing -MaximumRedirection 5; if($response.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
 
 if %errorLevel% equ 0 (
     echo [SUCCESS] Data sent to Google Sheets successfully!
