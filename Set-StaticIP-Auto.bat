@@ -3,13 +3,18 @@
 :: Automatically detect current IP and make it static
 
 :: Check for administrator privileges
+echo [INIT] Checking administrator privileges...
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo This script requires administrator privileges!
-    echo Please right-click Command Prompt and select "Run as Administrator"
-    pause
+    echo [ERROR] This script requires administrator privileges!
+    echo [ERROR] Please right-click Command Prompt and select "Run as Administrator"
+    echo [FAILED] Administrator privilege check failed
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
+echo [SUCCESS] Administrator privileges confirmed
 
 echo ========================================
 echo Auto Static IP Configuration
@@ -17,56 +22,98 @@ echo ========================================
 echo.
 
 :: Step 1: Get current IP address using ipconfig
-echo [1/4] Detecting current IP address...
+echo [STEP 1/4] Detecting current IP address...
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4 Address"') do set currentIP=%%a
 set currentIP=%currentIP: =%
-echo Current IP: %currentIP%
+
+if "%currentIP%"=="" (
+    echo [ERROR] Could not detect IP address!
+    echo [FAILED] Step 1 - IP address detection
+    echo.
+    echo Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+echo [SUCCESS] Current IP detected: %currentIP%
 
 :: Step 2: Get subnet mask
-echo [2/4] Detecting subnet mask...
+echo [STEP 2/4] Detecting subnet mask...
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "Subnet Mask"') do set subnetMask=%%a
 set subnetMask=%subnetMask: =%
-echo Subnet Mask: %subnetMask%
+
+if "%subnetMask%"=="" (
+    echo [ERROR] Could not detect subnet mask!
+    echo [FAILED] Step 2 - Subnet mask detection
+    echo.
+    echo Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+echo [SUCCESS] Subnet mask detected: %subnetMask%
 
 :: Step 3: Get default gateway
-echo [3/4] Detecting default gateway...
+echo [STEP 3/4] Detecting default gateway...
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "Default Gateway"') do set gateway=%%a
 set gateway=%gateway: =%
-echo Default Gateway: %gateway%
+
+if "%gateway%"=="" (
+    echo [ERROR] Could not detect default gateway!
+    echo [FAILED] Step 3 - Default gateway detection
+    echo.
+    echo Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+echo [SUCCESS] Default gateway detected: %gateway%
 
 :: Step 4: Get network adapter name
-echo [4/4] Detecting network adapter...
+echo [STEP 4/4] Detecting network adapter...
 for /f "tokens=4" %%a in ('netsh interface show interface ^| findstr "Connected"') do set adapter=%%a
 
 :: If no connected adapter, try enabled adapters
 if "%adapter%"=="" (
+    echo [INFO] No connected adapter found, trying enabled adapters...
     for /f "tokens=4" %%a in ('netsh interface show interface ^| findstr "Enabled"') do set adapter=%%a
 )
 
 :: If still no adapter, use common names
 if "%adapter%"=="" (
+    echo [INFO] No specific adapter found, using default...
     set adapter=Ethernet
 )
-echo Network Adapter: %adapter%
+echo [SUCCESS] Network adapter detected: %adapter%
 
 :: Check if we have all required information
+echo.
+echo [VALIDATION] Checking all required information...
 if "%currentIP%"=="" (
-    echo ERROR: Could not detect IP address!
-    pause
+    echo [ERROR] Missing IP address!
+    echo [FAILED] Validation check
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
 
 if "%subnetMask%"=="" (
-    echo ERROR: Could not detect subnet mask!
-    pause
+    echo [ERROR] Missing subnet mask!
+    echo [FAILED] Validation check
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
 
 if "%gateway%"=="" (
-    echo ERROR: Could not detect default gateway!
-    pause
+    echo [ERROR] Missing default gateway!
+    echo [FAILED] Validation check
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
+
+echo [SUCCESS] All required information detected
 
 :: Show what will be configured
 echo.
@@ -87,27 +134,48 @@ echo.
 
 set /p confirm=Apply static IP configuration? (Y/N): 
 if /i not "%confirm%"=="Y" (
-    echo Configuration cancelled.
-    pause
+    echo [CANCELLED] User cancelled configuration
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
 
 :: Apply static IP configuration
 echo.
-echo Applying static IP configuration...
+echo [CONFIGURATION] Starting static IP configuration...
 
-echo Setting IP address to %currentIP%...
+echo [CONFIG] Setting IP address to %currentIP%...
 netsh interface ipv4 set address name="%adapter%" static %currentIP% %subnetMask% %gateway%
 
 if %errorLevel% neq 0 (
-    echo ERROR: Failed to set IP address!
-    pause
+    echo [ERROR] Failed to set IP address!
+    echo [FAILED] IP address configuration
+    echo [DEBUG] Adapter: %adapter%
+    echo [DEBUG] IP: %currentIP%
+    echo [DEBUG] Subnet: %subnetMask%
+    echo [DEBUG] Gateway: %gateway%
+    echo.
+    echo Press any key to exit...
+    pause >nul
     exit /b 1
 )
+echo [SUCCESS] IP address configured successfully
 
-echo Setting DNS servers to Google DNS...
+echo [CONFIG] Setting DNS servers to Google DNS...
 netsh interface ipv4 set dns name="%adapter%" static 8.8.8.8 primary
+if %errorLevel% neq 0 (
+    echo [WARNING] Failed to set primary DNS
+) else (
+    echo [SUCCESS] Primary DNS configured
+)
+
 netsh interface ipv4 add dns name="%adapter%" 8.8.4.4 index=2
+if %errorLevel% neq 0 (
+    echo [WARNING] Failed to set secondary DNS
+) else (
+    echo [SUCCESS] Secondary DNS configured
+)
 
 echo.
 echo ========================================
@@ -125,8 +193,11 @@ echo ========================================
 echo.
 
 :: Verify the configuration
-echo Verifying new configuration:
+echo [VERIFICATION] Checking new configuration...
 ipconfig | findstr /i "IPv4"
 ipconfig | findstr /i "Subnet"
 echo.
-pause
+echo [COMPLETED] All operations finished successfully!
+echo.
+echo Press any key to exit...
+pause >nul
