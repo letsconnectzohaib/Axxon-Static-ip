@@ -1,6 +1,10 @@
 @echo off
 :: Set-StaticIP-Standard.bat
 :: Standard method following Microsoft best practices
+:: Created by Mr. Zohaib
+
+:: Enable delayed expansion for better variable handling
+setlocal enabledelayedexpansion
 
 :: Check for administrator privileges
 net session >nul 2>&1
@@ -14,6 +18,7 @@ if %errorLevel% neq 0 (
 echo ========================================
 echo Standard Static IP Configuration
 echo Following Microsoft Best Practices
+echo Created by Mr. Zohaib
 echo ========================================
 echo.
 
