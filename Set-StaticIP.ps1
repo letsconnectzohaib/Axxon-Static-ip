@@ -1,6 +1,15 @@
 # Set-StaticIP.ps1
 # Script to convert dynamic IP configuration to static with Google DNS
 
+# Check for administrator privileges
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "This script requires administrator privileges!" -ForegroundColor Red
+    Write-Host "Please right-click PowerShell and select 'Run as Administrator'" -ForegroundColor Yellow
+    Write-Host "Press any key to exit..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit 1
+}
+
 # Get active network adapter
 $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and $_.MediaType -eq "802.3"} | Select-Object -First 1
 
