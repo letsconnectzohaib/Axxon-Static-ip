@@ -65,3 +65,11 @@ Write-Host "Default Gateway: $($verifyConfig.IPv4DefaultGateway.NextHop)"
 Write-Host "DNS Servers: $(($verifyConfig.DNSServer | Select-Object -ExpandProperty Address) -join ', ')"
 
 Write-Host "`nStatic IP configuration completed successfully!" -ForegroundColor Green
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "FINAL CONFIGURATION SET:" -ForegroundColor Yellow
+Write-Host "IP Address: $($verifyConfig.IPv4Address.IPAddress)" -ForegroundColor White
+Write-Host "Subnet Mask: $subnetMask" -ForegroundColor White
+Write-Host "Default Gateway: $($verifyConfig.IPv4DefaultGateway.NextHop)" -ForegroundColor White
+Write-Host "Primary DNS: 8.8.8.8" -ForegroundColor White
+Write-Host "Alternate DNS: 8.8.4.4" -ForegroundColor White
+Write-Host "========================================" -ForegroundColor Cyan
