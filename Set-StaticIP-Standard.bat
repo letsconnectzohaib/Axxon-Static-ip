@@ -84,7 +84,15 @@ echo   Primary DNS: 8.8.8.8
 echo   Secondary DNS: 8.8.4.4
 echo.
 
-echo Applying static IP configuration automatically...
+set /p confirm=Apply this static IP configuration? (Y/N): 
+if /i not "%confirm%"=="Y" (
+    echo Configuration cancelled.
+    pause
+    exit /b 1
+)
+
+:: Step 4: Apply static IP configuration
+echo Applying static IP configuration...
 echo.
 
 echo Setting static IP address...
