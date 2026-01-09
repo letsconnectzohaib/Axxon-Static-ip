@@ -14,7 +14,14 @@ if %errorLevel% neq 0 (
 echo Checking for active network adapter...
 
 :: Find active network adapter
-for /f "tokens=4" %%i in ('netsh interface show interface ^| findstr "Connected"') do set adapter=%%i
+for /f "tokens=*" %%i in ('netsh interface show interface ^| findstr "Connected"') do (
+    for /f "tokens=*" %%j in ("%%i") do set adapter=%%j
+)
+
+:: Clean up adapter name (remove status and other info)
+for /f "tokens=*" %%i in ("%adapter%") do (
+    for /f "tokens=1" %%j in ("%%i") do set adapter=%%j
+)
 
 if "%adapter%"=="" (
     echo No active network adapter found!
@@ -66,7 +73,7 @@ echo.
 echo Setting static IP configuration...
 
 :: Set static IP
-netsh interface ipv4 set address "%adapter%" static %currentIP% %subnetMask% %gateway%
+netsh interface ipv4 set address name="%adapter%" static %currentIP% %subnetMask% %gateway%
 
 if %errorLevel% neq 0 (
     echo ERROR: Failed to set static IP address!
@@ -77,8 +84,8 @@ if %errorLevel% neq 0 (
 echo Setting DNS servers to Google DNS...
 
 :: Set DNS servers
-netsh interface ipv4 set dns "%adapter%" static 8.8.8.8 primary
-netsh interface ipv4 add dns "%adapter%" 8.8.4.4 index=2
+netsh interface ipv4 set dns name="%adapter%" static 8.8.8.8 primary
+netsh interface ipv4 add dns name="%adapter%" 8.8.4.4 index=2
 
 if %errorLevel% neq 0 (
     echo ERROR: Failed to set DNS servers!
