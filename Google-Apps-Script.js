@@ -1,0 +1,34 @@
+// Google Apps Script for Static IP Database
+// Created by Mr. Zohaib
+
+function doPost(e) {
+  try {
+    // Parse the incoming data
+    var data = JSON.parse(e.postData.contents);
+    
+    // Get the active spreadsheet (using your specific sheet ID)
+    var sheet = SpreadsheetApp.openById('1pxWx6DCKDRUP3j9XY4Nq_witVqsxqvRt6cPmtuDlmBU').getSheetByName('Sheet1');
+    
+    // Add new row with data (matching your column structure)
+    sheet.appendRow([
+      data.name,        // Name column
+      data.ip,          // IP column
+      data.adapter,      // Adapter column
+      new Date().toLocaleDateString(), // Date column
+      new Date().toLocaleTimeString()  // Time column
+    ]);
+    
+    // Return success response
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "success",
+      "message": "Data saved successfully to Static IP Database"
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    // Return error response
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
