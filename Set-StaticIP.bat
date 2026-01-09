@@ -14,7 +14,7 @@ if %errorLevel% neq 0 (
 echo Checking for active network adapter...
 
 :: Find active network adapter
-for /f "tokens=3" %%i in ('netsh interface show interface ^| findstr "Connected"') do set adapter=%%i
+for /f "tokens=4" %%i in ('netsh interface show interface ^| findstr "Connected"') do set adapter=%%i
 
 if "%adapter%"=="" (
     echo No active network adapter found!
@@ -32,17 +32,17 @@ echo Detecting current IP settings...
 
 :: Get current IP address
 for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "IPv4 Address"') do (
-    for /f "tokens=1" %%j in ("%%i") do set currentIP=%%j
+    for /f "tokens=*" %%j in ("%%i") do set currentIP=%%j
 )
 
 :: Get current subnet mask
 for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "Subnet Mask"') do (
-    for /f "tokens=1" %%j in ("%%i") do set subnetMask=%%j
+    for /f "tokens=*" %%j in ("%%i") do set subnetMask=%%j
 )
 
 :: Get current default gateway
 for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "Default Gateway"') do (
-    for /f "tokens=1" %%j in ("%%i") do set gateway=%%j
+    for /f "tokens=*" %%j in ("%%i") do set gateway=%%j
 )
 
 :: Clean up variables (remove spaces)
