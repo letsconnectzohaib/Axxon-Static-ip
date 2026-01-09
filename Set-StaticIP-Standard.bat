@@ -23,66 +23,32 @@ echo ========================================
 echo.
 
 :: Step 1: Identify Network Adapter Name
-echo [Step 1/4] Identifying your network adapter...
-echo.
-echo Available network interfaces:
-netsh interface show interface
+echo [Step 1/4] Using default network adapter...
 echo.
 
-:: Create menu for adapter selection
-echo Please select your network adapter:
-echo.
-set /a adapterCount=0
-set adapterList=
-
-:: Build adapter list with numbers
-for /f "tokens=4" %%i in ('netsh interface show interface ^| findstr "Connected"') do (
-    set /a adapterCount+=1
-    set adapter!adapterCount!=%%i
-    echo [!adapterCount!] %%i
-)
-
-:: If no connected adapters, show enabled ones
-if %adapterCount% equ 0 (
-    echo No connected adapters found. Showing enabled adapters:
-    for /f "tokens=4" %%i in ('netsh interface show interface ^| findstr "Enabled"') do (
-        set /a adapterCount+=1
-        set adapter!adapterCount!=%%i
-        echo [!adapterCount!] %%i
-    )
-)
-
-if %adapterCount% equ 0 (
-    echo ERROR: No network adapters found!
-    pause
-    exit /b 1
-)
-
-echo.
-set /p choice=Enter the number of your adapter [1-%adapterCount%]: 
-
-:: Validate choice
-if %choice% leq 0 (
-    echo ERROR: Invalid selection!
-    pause
-    exit /b 1
-)
-
-if %choice% gtr %adapterCount% (
-    echo ERROR: Invalid selection!
-    pause
-    exit /b 1
-)
-
-:: Get selected adapter name
-set adapter=!adapter%choice%!
-echo.
-echo Selected adapter: "%adapter%"
+:: Set default adapter to Ethernet
+set adapter=Ethernet
+echo Selected adapter: "%adapter%" (Default)
 echo Created by Mr. Zohaib
 echo.
 
+:: Verify adapter exists
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% neq 0 (
+    echo WARNING: Ethernet adapter not found!
+    echo Available adapters:
+    netsh interface show interface
+    echo.
+    echo Please check your network adapter name and update the script.
+    pause
+    exit /b 1
+)
+
+echo SUCCESS: Ethernet adapter found and ready for configuration.
+echo.
+
 :: Step 2: Detect current IP settings
-echo [Step 2/4] Detecting current IP configuration...
+echo [Step 2/3] Detecting current IP configuration...
 echo.
 
 :: Get current IP address
@@ -109,7 +75,7 @@ echo Current Default Gateway: %gateway%
 echo.
 
 :: Step 3: Confirm configuration
-echo [Step 3/4] Configuration to be applied:
+echo [Step 3/3] Configuration to be applied:
 echo   Interface Name: "%adapter%"
 echo   IP Address: %currentIP%
 echo   Subnet Mask: %subnetMask%
@@ -126,7 +92,7 @@ if /i not "%confirm%"=="Y" (
 )
 
 :: Step 4: Apply static IP configuration
-echo [Step 4/4] Applying static IP configuration...
+echo Applying static IP configuration...
 echo.
 
 echo Setting static IP address...
