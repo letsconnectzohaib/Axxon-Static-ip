@@ -86,9 +86,11 @@ echo.
 
 set /p confirm=Apply this static IP configuration? (Y/N): 
 if /i not "%confirm%"=="Y" (
-    echo Configuration cancelled.
-    pause
-    exit /b 1
+    if /i not "%confirm%"=="" (
+        echo Configuration cancelled.
+        pause
+        exit /b 1
+    )
 )
 
 :: Step 4: Apply static IP configuration
