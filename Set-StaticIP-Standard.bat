@@ -149,4 +149,48 @@ echo.
 echo To revert back to automatic IP later, use:
 echo   netsh interface ipv4 set address name="%adapter%" source=dhcp
 echo.
-pause
+
+:: Step 5: Get user information for database storage
+echo ========================================
+echo USER INFORMATION
+echo ========================================
+echo Please enter your information for database storage:
+echo.
+
+set /p userName=Enter your name: 
+echo.
+echo Thank you, %userName%!
+echo.
+echo Your information will be stored with the following data:
+echo   Name: %userName%
+echo   IP Address: %currentIP%
+echo   Adapter: %adapter%
+echo   Timestamp: %date% %time%
+echo.
+
+:: Save information to Google Sheets (and local backup)
+echo Saving information to Google Sheets...
+echo.
+
+:: Try to send to Google Sheets first
+echo Sending data to Google Sheets...
+powershell -Command "& {$body = @{name='%userName%'; ip='%currentIP%'; adapter='%adapter%'; timestamp='%date% %time%'} | ConvertTo-Json; try { $response = Invoke-RestMethod -Uri 'https://script.google.com/macros/s/AKfycbyg1tWXkVfplA7wXclnj0iVqkfcv5T0XMHCIQQYGhWb_SC3GkYYErJ9dun2COXj9i6k/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -FollowRelLinks; Write-Host 'Google Sheets Response:' $response; exit 0 } catch { Write-Host 'Error:' $_.Exception.Message; exit 1 }}"
+
+if %errorLevel% equ 0 (
+    echo [SUCCESS] Data sent to Google Sheets successfully!
+) else (
+    echo [INFO] Google Sheets not available, saving to local file...
+    echo Name: %userName% >> StaticIP_Database.txt
+    echo IP Address: %currentIP% >> StaticIP_Database.txt
+    echo Adapter: %adapter% >> StaticIP_Database.txt
+    echo Timestamp: %date% %time% >> StaticIP_Database.txt
+    echo ======================================== >> StaticIP_Database.txt
+    echo [SUCCESS] Information saved to StaticIP_Database.txt
+)
+
+echo.
+echo Created by Mr. Zohaib
+echo.
+echo Press any key to exit...
+pause >nul
+exit
