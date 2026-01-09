@@ -24,9 +24,56 @@ echo Available network interfaces:
 netsh interface show interface
 echo.
 
-set /p adapter=Enter the exact Interface Name from above list: 
+:: Create menu for adapter selection
+echo Please select your network adapter:
+echo.
+set /a adapterCount=0
+set adapterList=
+
+:: Build adapter list with numbers
+for /f "tokens=4" %%i in ('netsh interface show interface ^| findstr "Connected"') do (
+    set /a adapterCount+=1
+    set adapter!adapterCount!=%%i
+    echo [!adapterCount!] %%i
+)
+
+:: If no connected adapters, show enabled ones
+if %adapterCount% equ 0 (
+    echo No connected adapters found. Showing enabled adapters:
+    for /f "tokens=4" %%i in ('netsh interface show interface ^| findstr "Enabled"') do (
+        set /a adapterCount+=1
+        set adapter!adapterCount!=%%i
+        echo [!adapterCount!] %%i
+    )
+)
+
+if %adapterCount% equ 0 (
+    echo ERROR: No network adapters found!
+    pause
+    exit /b 1
+)
+
+echo.
+set /p choice=Enter the number of your adapter [1-%adapterCount%]: 
+
+:: Validate choice
+if %choice% leq 0 (
+    echo ERROR: Invalid selection!
+    pause
+    exit /b 1
+)
+
+if %choice% gtr %adapterCount% (
+    echo ERROR: Invalid selection!
+    pause
+    exit /b 1
+)
+
+:: Get selected adapter name
+set adapter=!adapter%choice%!
 echo.
 echo Selected adapter: "%adapter%"
+echo Created by Mr. Zohaib
 echo.
 
 :: Step 2: Detect current IP settings
