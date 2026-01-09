@@ -174,7 +174,7 @@ echo.
 
 :: Try to send to Google Sheets first
 echo Sending data to Google Sheets...
-powershell -Command "& {$body = @{name='%userName%'; ip='%currentIP%'; adapter='%adapter%'; timestamp='%date% %time%'} | ConvertTo-Json; try { $response = Invoke-RestMethod -Uri 'https://script.google.com/macros/s/AKfycbyg1tWXkVfplA7wXclnj0iVqkfcv5T0XMHCIQQYGhWb_SC3GkYYErJ9dun2COXj9i6k/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -FollowRelLinks; Write-Host 'Google Sheets Response:' $response; exit 0 } catch { Write-Host 'Error:' $_.Exception.Message; exit 1 }}"
+powershell -Command "$body = @{name='%userName%'; ip='%currentIP%'; adapter='%adapter%'; timestamp='%date% %time%'} | ConvertTo-Json; Invoke-RestMethod -Uri 'https://script.google.com/macros/s/AKfycbyg1tWXkVfplA7wXclnj0iVqkfcv5T0XMHCIQQYGhWb_SC3GkYYErJ9dun2COXj9i6k/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -FollowRelLinks"
 
 if %errorLevel% equ 0 (
     echo [SUCCESS] Data sent to Google Sheets successfully!
