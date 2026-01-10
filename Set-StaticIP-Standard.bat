@@ -84,15 +84,6 @@ echo   Primary DNS: 8.8.8.8
 echo   Secondary DNS: 8.8.4.4
 echo.
 
-set /p confirm=Apply this static IP configuration? (Y/N): 
-if /i not "%confirm%"=="Y" (
-    if /i not "%confirm%"=="" (
-        echo Configuration cancelled.
-        pause
-        exit /b 1
-    )
-)
-
 :: Step 4: Apply static IP configuration
 echo Applying static IP configuration...
 echo.
@@ -159,12 +150,40 @@ echo ========================================
 echo Please enter your information for database storage:
 echo.
 
-set /p userName=Enter your name: 
+:: Team selection
+echo Select your team:
+echo 1: Team Haseeb
+echo 2: Team Fahad
+echo 3: Team Abdullah
+echo 4: Team Raja Nafeel
+echo 5: Team Hashim Khan
+echo 6: Team Abdul Manan
+echo 7: Others
 echo.
-echo Thank you, %userName%!
+
+set /p teamChoice=Enter team number (1-7): 
+if "%teamChoice%"=="1" set teamName=Team Haseeb
+if "%teamChoice%"=="2" set teamName=Team Fahad
+if "%teamChoice%"=="3" set teamName=Team Abdullah
+if "%teamChoice%"=="4" set teamName=Team Raja Nafeel
+if "%teamChoice%"=="5" set teamName=Team Hashim Khan
+if "%teamChoice%"=="6" set teamName=Team Abdul Manan
+if "%teamChoice%"=="7" set teamName=Others
+if "%teamChoice%"=="" set teamName=Team Haseeb
+
+if "%teamName%"=="" (
+    echo Invalid team selection. Defaulting to Team Haseeb.
+    set teamName=Team Haseeb
+)
+
+echo.
+set /p agentName=Enter your name: 
+echo.
+echo Thank you, %agentName%!
 echo.
 echo Your information will be stored with the following data:
-echo   Name: %userName%
+echo   Team: %teamName%
+echo   Agent Name: %agentName%
 echo   IP Address: %currentIP%
 echo   Adapter: %adapter%
 echo   Timestamp: %date% %time%
@@ -176,13 +195,14 @@ echo.
 
 :: Try to send to Google Sheets first
 echo Sending data to Google Sheets...
-powershell -Command "$body = '{\"name\":\"%userName%\",\"ip\":\"%currentIP%\",\"adapter\":\"%adapter%\",\"timestamp\":\"%date% %time%\"}'; try { $response = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbz8QJNtfqpztZtgJ9LVukZ1Nfsd9xaZ4nqQgGUKaPOh8clLQ9TCCZzvY0dTbHiiqRW6/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -UseBasicParsing -MaximumRedirection 5; if($response.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
+powershell -Command "$body = '{\"teamName\":\"%teamName%\",\"agentName\":\"%agentName%\",\"ip\":\"%currentIP%\",\"adapter\":\"%adapter%\",\"timestamp\":\"%date% %time%\"}'; try { $response = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbwnQY04lRwKOSB44SziNp81KYCW_H5dLhuj9qlixwRbjb9-X5D5VjsKYFiJVLZ4IlLT/exec' -Method POST -Body $body -ContentType 'application/json' -TimeoutSec 15 -UseBasicParsing -MaximumRedirection 5; if($response.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
 
 if %errorLevel% equ 0 (
     echo [SUCCESS] Data sent to Google Sheets successfully!
 ) else (
     echo [INFO] Google Sheets not available, saving to local file...
-    echo Name: %userName% >> StaticIP_Database.txt
+    echo Team: %teamName% >> StaticIP_Database.txt
+    echo Agent Name: %agentName% >> StaticIP_Database.txt
     echo IP Address: %currentIP% >> StaticIP_Database.txt
     echo Adapter: %adapter% >> StaticIP_Database.txt
     echo Timestamp: %date% %time% >> StaticIP_Database.txt

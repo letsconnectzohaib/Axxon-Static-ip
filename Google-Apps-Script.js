@@ -6,13 +6,14 @@ function doPost(e) {
     // Parse the incoming data
     var data = JSON.parse(e.postData.contents);
     
-    // Get the active spreadsheet (using your specific sheet ID)
-    var sheet = SpreadsheetApp.openById('1YmH3QJy5huZC8NWJ13NcHmJ3gpWf3tIJZSsbp5wNakIU-Sb6NyuqtnM0').getSheetByName('Sheet1');
+    // Get the active spreadsheet (using your new sheet ID)
+    var sheet = SpreadsheetApp.openById('1pxWx6DCKDRUP3j9XY4Nq_witVqsxqvRt6cPmtuDlmBU').getSheetByName('Sheet1');
     
-    // Add a new row with the data (matching your column structure)
+    // Add a new row with the data (matching your current column structure)
     sheet.appendRow([
-      data.name,        // Name column
-      data.ip,          // IP column
+      data.teamName,     // Team Name column
+      data.agentName,    // Agent Name column
+      data.ip,           // IP column
       data.adapter,      // Adapter column
       new Date().toLocaleDateString(), // Date column
       new Date().toLocaleTimeString()  // Time column
