@@ -23,54 +23,58 @@ echo ========================================
 echo.
 
 :: Step 1: Identify Network Adapter Name
-echo [Step 1/4] Using default network adapter...
+echo [Step 1/3] Identifying network adapter...
 echo.
 
-:: Set default adapter to Ethernet
+:: Try default adapter first
 set adapter=Ethernet
-echo Selected adapter: "%adapter%" (Default)
-echo Created by Mr. Zohaib
-echo.
-
-:: Verify adapter exists
+echo Checking default adapter: "%adapter%"
 netsh interface show interface name="%adapter%" >nul 2>&1
-if %errorLevel% neq 0 (
-    echo WARNING: "%adapter%" adapter not found!
-    echo Available adapters:
-    echo.
-    setlocal enabledelayedexpansion
-    set count=0
-    for /f "tokens=4,*" %%a in ('netsh interface show interface ^| findstr "Connected"') do (
-        set /a count+=1
-        set "adapter_!count!=%%a %%b"
-        echo !count!: %%a %%b
-    )
-    echo.
-    if !count! equ 0 (
-        echo No connected adapters found. Showing all adapters:
-        echo.
-        set count=0
-        for /f "skip=3 tokens=4,*" %%a in ('netsh interface show interface') do (
-            if not "%%a"=="" (
-                set /a count+=1
-                set "adapter_!count!=%%a %%b"
-                echo !count!: %%a %%b
-            )
-        )
-    )
-    echo.
-    set /p adapterChoice=Enter adapter number (1-!count!): 
-    if defined adapter_%adapterChoice% (
-        set "adapter=!adapter_%adapterChoice%!"
-        echo Selected adapter: "!adapter!"
-    ) else (
-        echo Invalid selection. Using default: Ethernet
-        set adapter=Ethernet
-    )
-    endlocal
+if %errorLevel% equ 0 (
+    echo SUCCESS: Default adapter "%adapter%" found and ready for configuration.
+    goto :adapter_found
 )
 
-echo SUCCESS: Adapter "!adapter!" found and ready for configuration.
+:: Default adapter not found, show all available adapters
+echo WARNING: Default adapter "%adapter%" not found!
+echo.
+echo Available network adapters:
+echo ========================================
+netsh interface show interface | findstr /v "-----" | findstr /v "Admin State" | findstr /v "Type"
+echo ========================================
+echo.
+
+:: Let user choose from available adapters
+echo Please select an adapter from the list above.
+set /p adapter=Enter adapter name exactly as shown: 
+echo.
+
+:: Verify user's choice
+if "%adapter%"=="" (
+    echo ERROR: No adapter name entered.
+    echo Defaulting to "Ethernet" for troubleshooting.
+    set adapter=Ethernet
+)
+
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% neq 0 (
+    echo ERROR: Adapter "%adapter%" not found!
+    echo.
+    echo Troubleshooting steps:
+    echo 1. Check if adapter name is spelled correctly
+    echo 2. Ensure network cable is connected
+    echo 3. Try running as Administrator
+    echo 4. Check Device Manager for disabled adapters
+    echo.
+    echo Available adapters again:
+    netsh interface show interface | findstr /v "-----" | findstr /v "Admin State" | findstr /v "Type"
+    echo.
+    pause
+    exit /b 1
+)
+
+:adapter_found
+echo SUCCESS: Adapter "%adapter%" verified and ready for configuration.
 echo.
 
 :: Step 2: Detect current IP settings
