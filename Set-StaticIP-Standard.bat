@@ -23,28 +23,30 @@ echo ========================================
 echo.
 
 :: Step 1: Identify Network Adapter Name
-echo [Step 1/4] Using default network adapter...
+echo [Step 1/3] Using default network adapter...
 echo.
 
-:: Set default adapter to Ethernet
+:: Try Ethernet first
 set adapter=Ethernet
-echo Selected adapter: "%adapter%" (Default)
-echo Created by Mr. Zohaib
-echo.
-
-:: Verify adapter exists
 netsh interface show interface name="%adapter%" >nul 2>&1
 if %errorLevel% neq 0 (
-    echo WARNING: Ethernet adapter not found!
-    echo Available adapters:
-    netsh interface show interface
-    echo.
-    echo Please check your network adapter name and update the script.
-    pause
-    exit /b 1
+    echo Ethernet not found, trying Ethernet 2...
+    set adapter=Ethernet 2
+    netsh interface show interface name="%adapter%" >nul 2>&1
+    if %errorLevel% neq 0 (
+        echo Ethernet 2 not found, trying Local Area Connection...
+        set adapter=Local Area Connection
+        netsh interface show interface name="%adapter%" >nul 2>&1
+        if %errorLevel% neq 0 (
+            echo No standard adapters found. Please check your network adapter name.
+            pause
+            exit /b 1
+        )
+    )
 )
 
-echo SUCCESS: Ethernet adapter found and ready for configuration.
+echo Selected adapter: "%adapter%" (Auto-detected)
+echo Created by Mr. Zohaib
 echo.
 
 :: Step 2: Detect current IP settings
