@@ -132,7 +132,8 @@ for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| finds
 
 for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| findstr /i "Subnet Prefix:"') do (
     for /f "tokens=3 delims=( " %%j in ("%%i") do set subnetPrefix=%%j
-    for /f "tokens=2 delims=/" %%k in ("!subnetPrefix!") do set subnetMask=%%k
+    :: Convert prefix length to subnet mask
+    call :ConvertPrefixToMask !subnetPrefix!
 )
 
 for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| findstr /i "Default Gateway:"') do (
@@ -344,3 +345,37 @@ echo.
 echo Press any key to exit...
 pause >nul
 exit
+
+:: ========================================
+:: SUBROUTINES
+:: ========================================
+
+:ConvertPrefixToMask
+set prefix=%1
+if "%prefix%"=="8" set subnetMask=255.0.0.0
+if "%prefix%"=="9" set subnetMask=255.128.0.0
+if "%prefix%"=="10" set subnetMask=255.192.0.0
+if "%prefix%"=="11" set subnetMask=255.224.0.0
+if "%prefix%"=="12" set subnetMask=255.240.0.0
+if "%prefix%"=="13" set subnetMask=255.248.0.0
+if "%prefix%"=="14" set subnetMask=255.252.0.0
+if "%prefix%"=="15" set subnetMask=255.254.0.0
+if "%prefix%"=="16" set subnetMask=255.255.0.0
+if "%prefix%"=="17" set subnetMask=255.255.128.0
+if "%prefix%"=="18" set subnetMask=255.255.192.0
+if "%prefix%"=="19" set subnetMask=255.255.224.0
+if "%prefix%"=="20" set subnetMask=255.255.240.0
+if "%prefix%"=="21" set subnetMask=255.255.248.0
+if "%prefix%"=="22" set subnetMask=255.255.252.0
+if "%prefix%"=="23" set subnetMask=255.255.254.0
+if "%prefix%"=="24" set subnetMask=255.255.255.0
+if "%prefix%"=="25" set subnetMask=255.255.255.128
+if "%prefix%"=="26" set subnetMask=255.255.255.192
+if "%prefix%"=="27" set subnetMask=255.255.255.224
+if "%prefix%"=="28" set subnetMask=255.255.255.240
+if "%prefix%"=="29" set subnetMask=255.255.255.248
+if "%prefix%"=="30" set subnetMask=255.255.255.252
+if "%prefix%"=="31" set subnetMask=255.255.255.254
+if "%prefix%"=="32" set subnetMask=255.255.255.255
+if "%subnetMask%"=="" set subnetMask=255.255.255.0
+goto :eof
