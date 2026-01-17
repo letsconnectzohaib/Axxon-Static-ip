@@ -26,48 +26,91 @@ echo.
 echo [Step 1/3] Identifying network adapter...
 echo.
 
-:: Try default adapter first
+:: Try common adapter names in order of preference
+echo Checking for common network adapters...
+echo.
+
+:: Check for Ethernet (most common)
 set adapter=Ethernet
-echo Checking default adapter: "%adapter%"
+echo Checking: "%adapter%"
 netsh interface show interface name="%adapter%" >nul 2>&1
 if %errorLevel% equ 0 (
-    echo SUCCESS: Default adapter "%adapter%" found and ready for configuration.
+    echo SUCCESS: Found "%adapter%"
     goto :adapter_found
 )
 
-:: Default adapter not found, show all available adapters
-echo WARNING: Default adapter "%adapter%" not found!
+:: Check for Ethernet 2 (second Ethernet adapter)
+set adapter=Ethernet 2
+echo Checking: "%adapter%"
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo SUCCESS: Found "%adapter%"
+    goto :adapter_found
+)
+
+:: Check for Wi-Fi adapters
+set adapter=Wi-Fi
+echo Checking: "%adapter%"
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo SUCCESS: Found "%adapter%"
+    goto :adapter_found
+)
+
+:: Check for Local Area Connection
+set adapter=Local Area Connection
+echo Checking: "%adapter%"
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo SUCCESS: Found "%adapter%"
+    goto :adapter_found
+)
+
+:: Check for Local Area Connection 2
+set adapter=Local Area Connection 2
+echo Checking: "%adapter%"
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo SUCCESS: Found "%adapter%"
+    goto :adapter_found
+)
+
+:: No common adapters found, show all available adapters
+echo WARNING: No common network adapters found!
 echo.
-echo Available network adapters:
+echo All available network adapters:
 echo ========================================
-netsh interface show interface | findstr /v "-----" | findstr /v "Admin State" | findstr /v "Type"
+netsh interface show interface | findstr /v "-----" | findstr /v "Admin State" | findstr /v "Type" | findstr /v "^$" | findstr "Connected"
 echo ========================================
 echo.
 
-:: Let user choose from available adapters
-echo Please select an adapter from the list above.
-set /p adapter=Enter adapter name exactly as shown: 
+:: Let user choose from connected adapters only
+echo Please select a CONNECTED adapter from the list above.
+set /p adapter=Enter adapter name exactly as shown (including spaces): 
 echo.
 
 :: Verify user's choice
 if "%adapter%"=="" (
     echo ERROR: No adapter name entered.
-    echo Defaulting to "Ethernet" for troubleshooting.
-    set adapter=Ethernet
+    echo Please run the script again and enter a valid adapter name.
+    pause
+    exit /b 1
 )
 
+:: Use quotes for adapter names with spaces
 netsh interface show interface name="%adapter%" >nul 2>&1
 if %errorLevel% neq 0 (
-    echo ERROR: Adapter "%adapter%" not found!
+    echo ERROR: Adapter "%adapter%" not found or not connected!
     echo.
     echo Troubleshooting steps:
-    echo 1. Check if adapter name is spelled correctly
-    echo 2. Ensure network cable is connected
-    echo 3. Try running as Administrator
+    echo 1. Ensure adapter name is spelled exactly as shown (including spaces)
+    echo 2. Make sure the adapter is connected (check cable or Wi-Fi)
+    echo 3. Try running this script as Administrator
     echo 4. Check Device Manager for disabled adapters
+    echo 5. Ensure network adapter is enabled in Control Panel
     echo.
-    echo Available adapters again:
-    netsh interface show interface | findstr /v "-----" | findstr /v "Admin State" | findstr /v "Type"
+    echo Available CONNECTED adapters again:
+    netsh interface show interface | findstr /v "-----" | findstr /v "Admin State" | findstr /v "Type" | findstr /v "^$" | findstr "Connected"
     echo.
     pause
     exit /b 1
@@ -81,23 +124,78 @@ echo.
 echo [Step 2/3] Detecting current IP configuration...
 echo.
 
-:: Get current IP address
-for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "IPv4 Address"') do (
-    for /f "tokens=*" %%j in ("%%i") do set currentIP=%%j
+:: Method 1: Try netsh interface ipv4 show config (Microsoft preferred method)
+echo Attempting to detect IP using netsh...
+for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| findstr /i "IP Address:"') do (
+    for /f "tokens=3" %%j in ("%%i") do set currentIP=%%j
 )
+
+for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| findstr /i "Subnet Prefix:"') do (
+    for /f "tokens=3 delims=( " %%j in ("%%i") do set subnetPrefix=%%j
+    for /f "tokens=2 delims=/" %%k in ("!subnetPrefix!") do set subnetMask=%%k
+)
+
+for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| findstr /i "Default Gateway:"') do (
+    for /f "tokens=3" %%j in ("%%i") do set gateway=%%j
+)
+
+:: Fallback Method 2: Use ipconfig if netsh fails
+if "%currentIP%"=="" (
+    echo netsh method failed, trying ipconfig...
+    for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "IPv4 Address"') do (
+        for /f "tokens=*" %%j in ("%%i") do set currentIP=%%j
+    )
+    set currentIP=%currentIP: =%
+
+    for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "Subnet Mask"') do (
+        for /f "tokens=*" %%j in ("%%i") do set subnetMask=%%j
+    )
+    set subnetMask=%subnetMask: =%
+
+    for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "Default Gateway"') do (
+        for /f "tokens=*" %%j in ("%%i") do set gateway=%%j
+    )
+    set gateway=%gateway: =%
+)
+
+:: Fallback Method 3: Try WMIC if both netsh and ipconfig fail
+if "%currentIP%"=="" (
+    echo ipconfig method failed, trying WMIC...
+    for /f "tokens=2 delims=," %%i in ('wmic nicconfig where "IPEnabled=TRUE" get IPAddress /format:csv ^| findstr /v "^$"') do (
+        for /f "tokens=1 delims=;" %%j in ("%%i") do set currentIP=%%j
+    )
+
+    for /f "tokens=2 delims=," %%i in ('wmic nicconfig where "IPEnabled=TRUE" get IPSubnet /format:csv ^| findstr /v "^$"') do (
+        set subnetMask=%%i
+    )
+
+    for /f "tokens=2 delims=," %%i in ('wmic nicconfig where "IPEnabled=TRUE" get DefaultIPGateway /format:csv ^| findstr /v "^$"') do (
+        set gateway=%%i
+    )
+)
+
+:: Clean up any remaining spaces
 set currentIP=%currentIP: =%
-
-:: Get current subnet mask
-for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "Subnet Mask"') do (
-    for /f "tokens=*" %%j in ("%%i") do set subnetMask=%%j
-)
 set subnetMask=%subnetMask: =%
-
-:: Get current default gateway
-for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /i "Default Gateway"') do (
-    for /f "tokens=*" %%j in ("%%i") do set gateway=%%j
-)
 set gateway=%gateway: =%
+
+:: Validate detected values
+if "%currentIP%"=="" (
+    echo ERROR: Could not detect IP address!
+    echo Please check network connection and adapter status.
+    pause
+    exit /b 1
+)
+
+if "%subnetMask%"=="" (
+    echo WARNING: Could not detect subnet mask, using default...
+    set subnetMask=255.255.255.0
+)
+
+if "%gateway%"=="" (
+    echo WARNING: Could not detect default gateway, using common default...
+    set gateway=192.168.1.1
+)
 
 echo Current IP Address: %currentIP%
 echo Current Subnet Mask: %subnetMask%
