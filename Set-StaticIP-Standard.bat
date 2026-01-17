@@ -23,30 +23,54 @@ echo ========================================
 echo.
 
 :: Step 1: Identify Network Adapter Name
-echo [Step 1/3] Using default network adapter...
+echo [Step 1/4] Using default network adapter...
 echo.
 
-:: Try Ethernet first
+:: Set default adapter to Ethernet
 set adapter=Ethernet
+echo Selected adapter: "%adapter%" (Default)
+echo Created by Mr. Zohaib
+echo.
+
+:: Verify adapter exists
 netsh interface show interface name="%adapter%" >nul 2>&1
 if %errorLevel% neq 0 (
-    echo Ethernet not found, trying Ethernet 2...
-    set adapter=Ethernet 2
-    netsh interface show interface name="%adapter%" >nul 2>&1
-    if %errorLevel% neq 0 (
-        echo Ethernet 2 not found, trying Local Area Connection...
-        set adapter=Local Area Connection
-        netsh interface show interface name="%adapter%" >nul 2>&1
-        if %errorLevel% neq 0 (
-            echo No standard adapters found. Please check your network adapter name.
-            pause
-            exit /b 1
+    echo WARNING: "%adapter%" adapter not found!
+    echo Available adapters:
+    echo.
+    setlocal enabledelayedexpansion
+    set count=0
+    for /f "tokens=4,*" %%a in ('netsh interface show interface ^| findstr "Connected"') do (
+        set /a count+=1
+        set "adapter_!count!=%%a %%b"
+        echo !count!: %%a %%b
+    )
+    echo.
+    if !count! equ 0 (
+        echo No connected adapters found. Showing all adapters:
+        echo.
+        set count=0
+        for /f "skip=3 tokens=4,*" %%a in ('netsh interface show interface') do (
+            if not "%%a"=="" (
+                set /a count+=1
+                set "adapter_!count!=%%a %%b"
+                echo !count!: %%a %%b
+            )
         )
     )
+    echo.
+    set /p adapterChoice=Enter adapter number (1-!count!): 
+    if defined adapter_%adapterChoice% (
+        set "adapter=!adapter_%adapterChoice%!"
+        echo Selected adapter: "!adapter!"
+    ) else (
+        echo Invalid selection. Using default: Ethernet
+        set adapter=Ethernet
+    )
+    endlocal
 )
 
-echo Selected adapter: "%adapter%" (Auto-detected)
-echo Created by Mr. Zohaib
+echo SUCCESS: Adapter "!adapter!" found and ready for configuration.
 echo.
 
 :: Step 2: Detect current IP settings
