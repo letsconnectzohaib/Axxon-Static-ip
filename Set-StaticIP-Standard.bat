@@ -281,24 +281,27 @@ echo.
 
 :: Team selection
 echo Select your team:
-echo 1: Team Haseeb
-echo 2: Team Fahad
-echo 3: Team Abdullah
-echo 4: Team Raja Nafeel
-echo 5: Team Hashim Khan
-echo 6: Team Abdul Manan
-echo 7: Others
+echo 1: Team Abdul Haseeb
+echo 2: Team Salik Khan
+echo 3: Team Seamab Khan
+echo 4: Team Zain Ul Abideen
+echo 5: Team Ejaz Khan
+echo 6: Team Usman Ghani
+echo 7: Team Abdul Manan
+echo 8: Team Hassam Nadeem
+echo 9: Others
 echo.
 
-set /p teamChoice=Enter team number (1-7): 
-if "%teamChoice%"=="1" set teamName=Team Haseeb
-if "%teamChoice%"=="2" set teamName=Team Fahad
-if "%teamChoice%"=="3" set teamName=Team Abdullah
-if "%teamChoice%"=="4" set teamName=Team Raja Nafeel
-if "%teamChoice%"=="5" set teamName=Team Hashim Khan
-if "%teamChoice%"=="6" set teamName=Team Abdul Manan
-if "%teamChoice%"=="7" set teamName=Others
-if "%teamChoice%"=="" set teamName=Team Haseeb
+set /p teamChoice=Enter team number (1-9): 
+if "%teamChoice%"=="1" set teamName=Team Abdul Haseeb
+if "%teamChoice%"=="2" set teamName=Team Salik Khan
+if "%teamChoice%"=="3" set teamName=Team Seamab Khan
+if "%teamChoice%"=="4" set teamName=Team Zain Ul Abideen
+if "%teamChoice%"=="5" set teamName=Team Ejaz Khan
+if "%teamChoice%"=="6" set teamName=Team Usman Ghani
+if "%teamChoice%"=="7" set teamName=Team Abdul Manan
+if "%teamChoice%"=="" set teamName=Team Hassam Nadeem
+if "%teamChoice%"=="" set teamName=Others
 
 if "%teamName%"=="" (
     echo Invalid team selection. Defaulting to Team Haseeb.
