@@ -300,8 +300,8 @@ if "%teamChoice%"=="4" set teamName=Team Zain Ul Abideen
 if "%teamChoice%"=="5" set teamName=Team Ejaz Khan
 if "%teamChoice%"=="6" set teamName=Team Usman Ghani
 if "%teamChoice%"=="7" set teamName=Team Abdul Manan
-if "%teamChoice%"=="" set teamName=Team Hassam Nadeem
-if "%teamChoice%"=="" set teamName=Others
+if "%teamChoice%"=="8" set teamName=Team Hassam Nadeem
+if "%teamChoice%"=="9" set teamName=Others
 
 if "%teamName%"=="" (
     echo Invalid team selection. Defaulting to Team Haseeb.
