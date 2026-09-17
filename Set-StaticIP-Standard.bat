@@ -48,6 +48,15 @@ if %errorLevel% equ 0 (
     goto :adapter_found
 )
 
+:: Check for Ethernet 3 (third Ethernet adapter)
+set adapter=Ethernet 3
+echo Checking: "%adapter%"
+netsh interface show interface name="%adapter%" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo SUCCESS: Found "%adapter%"
+    goto :adapter_found
+)
+
 :: Check for Wi-Fi adapters
 set adapter=Wi-Fi
 echo Checking: "%adapter%"
@@ -105,7 +114,7 @@ if %errorLevel% neq 0 (
     echo Troubleshooting steps:
     echo 1. Ensure adapter name is spelled exactly as shown (including spaces)
     echo 2. Make sure the adapter is connected (check cable or Wi-Fi)
-    echo 3. Try running this script as Administrator
+    echo 3. Try running the script as Administrator
     echo 4. Check Device Manager for disabled adapters
     echo 5. Ensure network adapter is enabled in Control Panel
     echo.
@@ -124,7 +133,7 @@ echo.
 echo [Step 2/3] Detecting current IP configuration...
 echo.
 
-:: Method 1: Try netsh interface ipv4 show config (Microsoft preferred method)
+:: Method 1: Try netsh interface ipv4 show config
 echo Attempting to detect IP using netsh...
 for /f "tokens=*" %%i in ('netsh interface ipv4 show config "%adapter%" ^| findstr /i "IP Address:"') do (
     for /f "tokens=3" %%j in ("%%i") do set currentIP=%%j
